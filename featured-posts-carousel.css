@@ -1,0 +1,15 @@
+div.featured-posts-carousel ul {
+  list-style: none;
+}
+
+div.featured-posts-carousel img {
+  display: block;
+}
+
+div.featured-posts-carousel ul.thumbnails li {
+  display: none;
+}
+
+div.featured-posts-carousel ul.thumbnails li.active {
+  display: block;
+}

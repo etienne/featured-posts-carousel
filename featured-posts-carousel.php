@@ -31,10 +31,15 @@ class FeaturedPostsCarousel {
   public function __construct() {
     load_plugin_textdomain($this->textdomain, false, basename(dirname(__FILE__) ) . '/languages');
     
+    add_image_size('featured-posts-carousel', 400, 150, true);
+    add_action('wp_enqueue_scripts', array($this, 'enqueue_assets'));
     add_action('add_meta_boxes', array($this, 'add_meta_box'));
     add_action('save_post', array($this, 'save_post'));
-    add_image_size('featured-posts-carousel', 400, 150, true);
-
+  }
+    
+  public function enqueue_assets() {
+    wp_enqueue_script('featured-posts-carousel', plugins_url('featured-posts-carousel.js', __FILE__), array('jquery'), '0.1');
+    wp_enqueue_style('featured-posts-carousel', plugins_url('featured-posts-carousel.css', __FILE__), array(), '0.1');
   }
   
   public function add_meta_box() {
