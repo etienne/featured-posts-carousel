@@ -12,4 +12,6 @@ A simple carousel with rotating posts and associated images.
 
 == Installation ==
 
-À venir.
+1. Put plugin directory into `wp-content/plugins/`, activate plugin
+2. Edit some posts and check 'Feature this post on home page'
+3. Use this anywhere in your theme: `<?php featured_posts_carousel() ?>`
