@@ -33,10 +33,8 @@ class FeaturedPostsCarousel {
     
     add_action('add_meta_boxes', array($this, 'add_meta_box'));
     add_action('save_post', array($this, 'save_post'));
+    add_image_size('featured-posts-carousel', 400, 150, true);
 
-    // Include JavaScript
-    
-    //
   }
   
   public function add_meta_box() {
@@ -84,8 +82,48 @@ class FeaturedPostsCarousel {
       delete_post_meta($post_id, $this->metafield, $old_value);
     }
   }
+  
+  public function get_featured_posts() {
+    $featured_posts = array();
+    $featured_posts_query = new WP_Query(array( 'post_type' => 'post', 'posts_per_page' => 3, 'meta_key' => $this->metafield, 'meta_value' => 1 ));
+    while ($featured_posts_query->have_posts()) {
+      $featured_posts_query->the_post();
+      $featured_posts[] = array(
+        'title' => $featured_posts_query->post->post_title,
+        'permalink' => get_permalink($featured_posts_query->post->ID),
+        'thumbnail' => get_the_post_thumbnail($featured_posts_query->post->ID, 'featured-posts-carousel')
+      );
+    }
+    return $featured_posts;
+  }
+  
+  public function print_carousel() {
+    $posts = $this->get_featured_posts();
+    $i = $j = 0;
+    ?>
+    <div class="featured-posts-carousel">
+      <ul class="thumbnails">
+        <?php foreach($posts as $post): ?>
+				<li<?php $i == 0 ? print ' class="active"' : '' ?>><?php print $post['thumbnail'] ?></li>
+				<?php $i++ ?>
+        <?php endforeach; ?>
+      </ul>
+      <ul class="articles">
+        <?php foreach($posts as $post): ?>
+				<li<?php $j == 0 ? print ' class="active"' : '' ?>><a href="<?php print $post['permalink'] ?>"><?php print $post['title'] ?></a></li>
+				<?php $j++ ?>
+        <?php endforeach; ?>
+      </ul>
+    </div>
+    <?php
+  }
 }
 
 $featured_posts_carousel = new FeaturedPostsCarousel();
+
+function featured_posts_carousel() {
+  global $featured_posts_carousel;
+  $featured_posts_carousel->print_carousel();
+}
 
 ?>
