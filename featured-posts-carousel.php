@@ -27,6 +27,7 @@ License: GPL2
 class FeaturedPostsCarousel {
   public $textdomain = 'featured-posts-carousel';
   public $metafield = 'featured_post';
+  public $default_delay = '5';
   
   public function __construct() {
     load_plugin_textdomain($this->textdomain, false, basename(dirname(__FILE__) ) . '/languages');
@@ -35,6 +36,7 @@ class FeaturedPostsCarousel {
     add_action('wp_enqueue_scripts', array($this, 'enqueue_assets'));
     add_action('add_meta_boxes', array($this, 'add_meta_box'));
     add_action('save_post', array($this, 'save_post'));
+    add_action('admin_init', array($this, 'admin_init'));
   }
     
   public function enqueue_assets() {
@@ -48,11 +50,7 @@ class FeaturedPostsCarousel {
   }
   
   public function print_meta_box($post) {
-    ?>
-    <input type="hidden" name="featured-posts-carousel-nonce" value="<?php print wp_create_nonce(basename(__FILE__)) ?>" />
-    <input type="checkbox" name="<?php print $this->metafield ?>" value="1" <?php checked(get_post_meta($post->ID, $this->metafield, true), 1); ?> />
-    <label for="<?php print $this->metafield ?>"><?php _e('Feature this post on home page') ?></label>
-    <?php
+    require 'views/meta_box.php';
   }
   
   public function save_post($post_id) {
@@ -87,6 +85,34 @@ class FeaturedPostsCarousel {
       delete_post_meta($post_id, $this->metafield, $old_value);
     }
   }
+    
+  public function admin_init() {
+    register_setting('reading', 'featured_posts_carousel', array($this, 'validate_settings'));
+    add_settings_section('featured_posts_carousel', __('Featured Posts Carousel', $this->textdomain), array($this, 'settings_section_text'), 'reading');
+    add_settings_field('delay', __('Rotation delay', $this->textdomain), array($this, 'delay_field'), 'reading', 'featured_posts_carousel');
+  }
+  
+  public function validate_settings($settings) {
+    $valid_settings = array();
+    foreach($settings as $setting => $value) {
+      switch($setting) {
+        case 'delay':
+          if (is_numeric($value)) {
+            $valid_settings[$setting] = $value;
+          }
+          break;
+      }
+    }
+    return $valid_settings;
+  }
+  
+  public function settings_section_text() {
+  }
+  
+  public function delay_field() {
+    $options = get_option('featured_posts_carousel', $this->default_delay);
+    print "<input id='delay' name='featured_posts_carousel[delay]' size='5' type='text' value='{$options['delay']}' /> seconds";
+  }
   
   public function get_featured_posts() {
     $featured_posts = array();
@@ -105,22 +131,7 @@ class FeaturedPostsCarousel {
   public function print_carousel() {
     $posts = $this->get_featured_posts();
     $i = $j = 0;
-    ?>
-    <div class="featured-posts-carousel">
-      <ul class="thumbnails">
-        <?php foreach($posts as $post): ?>
-				<li<?php $i == 0 ? print ' class="active"' : '' ?>><?php print $post['thumbnail'] ?></li>
-				<?php $i++ ?>
-        <?php endforeach; ?>
-      </ul>
-      <ul class="articles">
-        <?php foreach($posts as $post): ?>
-				<li<?php $j == 0 ? print ' class="active"' : '' ?>><a href="<?php print $post['permalink'] ?>"><?php print $post['title'] ?></a></li>
-				<?php $j++ ?>
-        <?php endforeach; ?>
-      </ul>
-    </div>
-    <?php
+    require 'views/carousel.php';
   }
 }
 

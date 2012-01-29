@@ -1,5 +1,4 @@
 jQuery(function($) {
-	// Front page carousel
 	var currently_hovering = false;
   
 	$('div.featured-posts-carousel ul.articles a').hover(function() {
@@ -15,6 +14,7 @@ jQuery(function($) {
 	})
     
 	// Rotation
+  var interval = $('div.featured-posts-carousel').attr('data-delay') * 1000;
 	window.setInterval(function() {
 	  if (currently_hovering == true) {
 	    return false;
@@ -36,5 +36,5 @@ jQuery(function($) {
 	  $('div.featured-posts-carousel ul.articles li').removeClass('active');
 	  $('div.featured-posts-carousel ul.thumbnails li:nth-child(' + next_index + ')').addClass('active');
 	  $('div.featured-posts-carousel ul.articles li:nth-child(' + next_index + ')').addClass('active');
-	}, 5000);
+	}, interval);
 });
