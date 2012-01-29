@@ -27,18 +27,21 @@ License: GPL2
 class FeaturedPostsCarousel {
   public $textdomain = 'featured-posts-carousel';
   public $metafield = 'featured_post';
-  public $default_delay = '5';
   
   public function __construct() {
+    register_activation_hook(__FILE__, array($this, 'install'));
     load_plugin_textdomain($this->textdomain, false, basename(dirname(__FILE__) ) . '/languages');
-    
     add_image_size('featured-posts-carousel', 400, 150, true);
     add_action('wp_enqueue_scripts', array($this, 'enqueue_assets'));
     add_action('add_meta_boxes', array($this, 'add_meta_box'));
     add_action('save_post', array($this, 'save_post'));
     add_action('admin_init', array($this, 'admin_init'));
   }
-    
+  
+  public function install() {
+    add_option('featured_posts_carousel', array('count' => '3', 'delay' => '5'));
+  }
+  
   public function enqueue_assets() {
     wp_enqueue_script('featured-posts-carousel', plugins_url('featured-posts-carousel.js', __FILE__), array('jquery'), '0.1');
     wp_enqueue_style('featured-posts-carousel', plugins_url('featured-posts-carousel.css', __FILE__), array(), '0.1');
@@ -55,7 +58,7 @@ class FeaturedPostsCarousel {
   
   public function save_post($post_id) {
     // Verify nonce
-    if (!isset($_POST['featured-posts-carousel-nonce']) || !wp_verify_nonce($_POST['featured-posts-carousel-nonce'], basename(__FILE__))) {
+    if (!isset($_POST['featured-posts-carousel-nonce']) || !wp_verify_nonce($_POST['featured-posts-carousel-nonce'], 'metabox')) {
       return $post_id;
     }
 
@@ -89,6 +92,7 @@ class FeaturedPostsCarousel {
   public function admin_init() {
     register_setting('reading', 'featured_posts_carousel', array($this, 'validate_settings'));
     add_settings_section('featured_posts_carousel', __('Featured Posts Carousel', $this->textdomain), array($this, 'settings_section_text'), 'reading');
+    add_settings_field('count', __('Show', $this->textdomain), array($this, 'count_field'), 'reading', 'featured_posts_carousel');
     add_settings_field('delay', __('Rotation delay', $this->textdomain), array($this, 'delay_field'), 'reading', 'featured_posts_carousel');
   }
   
@@ -96,6 +100,11 @@ class FeaturedPostsCarousel {
     $valid_settings = array();
     foreach($settings as $setting => $value) {
       switch($setting) {
+        case 'count':
+          if (is_numeric($value)) {
+            $valid_settings[$setting] = $value;
+          }
+          break;
         case 'delay':
           if (is_numeric($value)) {
             $valid_settings[$setting] = $value;
@@ -109,14 +118,20 @@ class FeaturedPostsCarousel {
   public function settings_section_text() {
   }
   
+  public function count_field() {
+    $options = get_option('featured_posts_carousel');
+    print "<input id='featured_posts_carousel_count' name='featured_posts_carousel[count]' size='5' type='text' value='{$options['count']}' /> " . __('posts', $this->textdomain);
+  }
+
   public function delay_field() {
-    $options = get_option('featured_posts_carousel', $this->default_delay);
-    print "<input id='delay' name='featured_posts_carousel[delay]' size='5' type='text' value='{$options['delay']}' /> seconds";
+    $options = get_option('featured_posts_carousel');
+    print "<input id='featured_posts_carousel_delay' name='featured_posts_carousel[delay]' size='5' type='text' value='{$options['delay']}' /> " . __('seconds', $this->textdomain);
   }
   
   public function get_featured_posts() {
+    $options = get_option('featured_posts_carousel');
     $featured_posts = array();
-    $featured_posts_query = new WP_Query(array( 'post_type' => 'post', 'posts_per_page' => 3, 'meta_key' => $this->metafield, 'meta_value' => 1 ));
+    $featured_posts_query = new WP_Query(array( 'post_type' => 'post', 'posts_per_page' => $options['count'], 'meta_key' => $this->metafield, 'meta_value' => 1));
     while ($featured_posts_query->have_posts()) {
       $featured_posts_query->the_post();
       $featured_posts[] = array(

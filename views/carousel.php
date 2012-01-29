@@ -1,6 +1,6 @@
 <?php
 if (!isset($this)) return false;
-$options = get_option('featured_posts_carousel', $this->default_delay);
+$options = get_option('featured_posts_carousel');
 ?>
 <div class="featured-posts-carousel" data-delay="<?php print $options['delay'] ?>">
   <ul class="thumbnails">
