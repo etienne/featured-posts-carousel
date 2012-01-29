@@ -27,11 +27,13 @@ License: GPL2
 class FeaturedPostsCarousel {
   public $textdomain = 'featured-posts-carousel';
   public $metafield = 'featured_post';
+  public $options = array();
   
   public function __construct() {
+    $this->options = get_option('featured_posts_carousel');
     register_activation_hook(__FILE__, array($this, 'install'));
     load_plugin_textdomain($this->textdomain, false, basename(dirname(__FILE__) ) . '/languages');
-    add_image_size('featured-posts-carousel', 400, 150, true);
+    add_image_size('featured-posts-carousel', $this->options['width'], $this->options['height'], true);
     add_action('wp_enqueue_scripts', array($this, 'enqueue_assets'));
     add_action('add_meta_boxes', array($this, 'add_meta_box'));
     add_action('save_post', array($this, 'save_post'));
@@ -39,7 +41,10 @@ class FeaturedPostsCarousel {
   }
   
   public function install() {
-    add_option('featured_posts_carousel', array('count' => '3', 'delay' => '5'));
+    add_option('featured_posts_carousel', array('count' => '3', 
+                                                'delay' => '5',
+                                                'width' => '400',
+                                                'height' => '150'));
   }
   
   public function enqueue_assets() {
@@ -94,22 +99,15 @@ class FeaturedPostsCarousel {
     add_settings_section('featured_posts_carousel', __('Featured Posts Carousel', $this->textdomain), array($this, 'settings_section_text'), 'reading');
     add_settings_field('count', __('Show', $this->textdomain), array($this, 'count_field'), 'reading', 'featured_posts_carousel');
     add_settings_field('delay', __('Rotation delay', $this->textdomain), array($this, 'delay_field'), 'reading', 'featured_posts_carousel');
+    add_settings_field('width', __('Thumbnail width', $this->textdomain), array($this, 'width_field'), 'reading', 'featured_posts_carousel');
+    add_settings_field('height', __('Thumbnail height', $this->textdomain), array($this, 'height_field'), 'reading', 'featured_posts_carousel');
   }
   
   public function validate_settings($settings) {
     $valid_settings = array();
     foreach($settings as $setting => $value) {
-      switch($setting) {
-        case 'count':
-          if (is_numeric($value)) {
-            $valid_settings[$setting] = $value;
-          }
-          break;
-        case 'delay':
-          if (is_numeric($value)) {
-            $valid_settings[$setting] = $value;
-          }
-          break;
+      if (is_numeric($value)) {
+        $valid_settings[$setting] = $value;
       }
     }
     return $valid_settings;
@@ -119,13 +117,19 @@ class FeaturedPostsCarousel {
   }
   
   public function count_field() {
-    $options = get_option('featured_posts_carousel');
-    print "<input id='featured_posts_carousel_count' name='featured_posts_carousel[count]' size='5' type='text' value='{$options['count']}' /> " . __('posts', $this->textdomain);
+    print "<input id='featured_posts_carousel_count' name='featured_posts_carousel[count]' size='4' type='text' value='{$this->options['count']}' /> " . __('posts', $this->textdomain);
   }
 
   public function delay_field() {
-    $options = get_option('featured_posts_carousel');
-    print "<input id='featured_posts_carousel_delay' name='featured_posts_carousel[delay]' size='5' type='text' value='{$options['delay']}' /> " . __('seconds', $this->textdomain);
+    print "<input id='featured_posts_carousel_delay' name='featured_posts_carousel[delay]' size='4' type='text' value='{$this->options['delay']}' /> " . __('seconds', $this->textdomain);
+  }
+
+  public function width_field() {
+    print "<input id='featured_posts_carousel_width' name='featured_posts_carousel[width]' size='4' type='text' value='{$this->options['width']}' /> " . __('pixels', $this->textdomain);
+  }
+
+  public function height_field() {
+    print "<input id='featured_posts_carousel_height' name='featured_posts_carousel[height]' size='4' type='text' value='{$this->options['height']}' /> " . __('pixels', $this->textdomain);
   }
   
   public function get_featured_posts() {
